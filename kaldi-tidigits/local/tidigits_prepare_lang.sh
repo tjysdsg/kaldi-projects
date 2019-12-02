@@ -1,13 +1,7 @@
 #!/bin/bash
 
-# Copyright 2012 Johns Hopkins University (Author: Daniel Povey)
-# Apache 2.0.
-
 # This script prepares the lang/ directory.
-#
-
 . ./path.sh 
-
 
 # Decided to do this using something like a real lexicon, although we
 # could also have used whole-word models.
@@ -15,7 +9,7 @@ tmpdir=data/local/dict
 lang=data/lang
 mkdir -p $tmpdir
 
-cat >$tmpdir/lexicon.txt <<EOF
+cat > $tmpdir/lexicon.txt <<EOF
 Z z iy r ow
 O ow
 1 w ah n
@@ -27,51 +21,46 @@ O ow
 7 s eh v ah n
 8 ey t
 9 n ay n
+<oov> SPN
 EOF
-# and note, we'll have a silence phone, but it won't appear
-# in this form of lexicon as there's no silence word; it's an option
-# in the lexicon FST that gets added by the script.
+# NOTE: we'll have a silence phone, but it won't appear in this form of lexicon as there's no silence word; it's an option in the lexicon FST that gets added by the script.
 
 mkdir -p $lang/phones
 
 # symbol-table for words:
-cat $tmpdir/lexicon.txt | awk '{print $1}' | awk 'BEGIN {print "<eps> 0"; n=1;} { printf("%s %s\n", $1, n++); }' \
-  >$lang/words.txt
+cat $tmpdir/lexicon.txt | awk '{print $1}' | awk 'BEGIN {print "<eps> 0"; n=1;} { printf("%s %s\n", $1, n++); }' > $lang/words.txt
 
 # list of phones.
-cat $tmpdir/lexicon.txt | awk '{for(n=2;n<=NF;n++) seen[$n]=1; } END{print "sil"; for (w in seen) { print w; }}' \
- >$tmpdir/phone.list
+cat $tmpdir/lexicon.txt | awk '{for(n=2;n<=NF;n++) seen[$n]=1; } END{print "sil"; for (w in seen) { print w; }}' > $tmpdir/phone.list
 
 # symbol-table for phones:
-cat $tmpdir/phone.list | awk 'BEGIN {print "<eps> 0"; n=1;} { printf("%s %s\n", $1, n++); }' \
-  >$lang/phones.txt
+cat $tmpdir/phone.list | awk 'BEGIN {print "<eps> 0"; n=1;} { printf("%s %s\n", $1, n++); }' > $lang/phones.txt
 
 p=$lang/phones
 echo sil > $p/silence.txt
 echo sil > $p/context_indep.txt
 echo sil > $p/optional_silence.txt
 grep -v -w sil $tmpdir/phone.list > $p/nonsilence.txt
-touch $p/disambig.txt # disambiguation-symbols list, will be empty.
-touch $p/extra_questions.txt # list of "extra questions"-- empty; we dont
-
-# have things like tone or word-positions or stress markings.
+# disambiguation-symbols list, will be empty
+touch $p/disambig.txt
+# list of extra questions empty we dont have things like tone or word-positions or stress markings
+touch $p/extra_questions.txt
 cat $tmpdir/phone.list > $p/sets.txt # list of "phone sets"-- each phone is in its
-# own set.  Normally, each line would have a bunch of word-position-dependenent or
+# own set. Normally, each line would have a bunch of word-position-dependenent or
 # stress-dependent realizations of the same phone.
 
 for t in silence nonsilence context_indep optional_silence disambig; do
-  utils/sym2int.pl $lang/phones.txt <$p/$t.txt >$p/$t.int
-  cat $p/$t.int | awk '{printf(":%d", $1);} END{printf "\n"}' | sed s/:// > $p/$t.csl 
+    utils/sym2int.pl $lang/phones.txt < $p/$t.txt > $p/$t.int
+    cat $p/$t.int | awk '{printf(":%d", $1);} END{printf "\n"}' | sed s/:// > $p/$t.csl 
 done
 for t in extra_questions sets; do
-  utils/sym2int.pl $lang/phones.txt <$p/$t.txt >$p/$t.int
+    utils/sym2int.pl $lang/phones.txt < $p/$t.txt > $p/$t.int
 done
 
-cat $tmpdir/phone.list | awk '{printf("shared split %s\n", $1);}' >$p/roots.txt
-utils/sym2int.pl -f 3-  $lang/phones.txt $p/roots.txt >$p/roots.int
+cat $tmpdir/phone.list | awk '{printf("shared split %s\n", $1);}' > $p/roots.txt
+utils/sym2int.pl -f 3-  $lang/phones.txt $p/roots.txt > $p/roots.int
 
-echo Z > $lang/oov.txt # we map OOV's to this.. there are no OOVs in this setup,
-   # but the scripts expect this file to exist.
+echo '<oov>' > $lang/oov.txt # we map OOV's to this.. there are no OOVs in this setup, but the scripts expect this file to exist.
 utils/sym2int.pl $lang/words.txt <$lang/oov.txt >$lang/oov.int
 
 # Note: "word_boundary.{txt,int}" will not exist in this setup.  This will mean it's
