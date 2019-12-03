@@ -1,5 +1,10 @@
 */exp
 */mfcc
+*/mfcc-pitch
+*/plp
+*/plp-pitch
+*/fbank
+*/fbank-pitch
 */data
 
 # Created by https://www.gitignore.io/api/c++,perl,cmake,perl6,linux,python,windows

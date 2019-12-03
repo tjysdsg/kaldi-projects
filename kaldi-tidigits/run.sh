@@ -1,7 +1,18 @@
 #!/bin/bash
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
 . ./cmd.sh ## You'll want to change cmd.sh to something that will work on your system. This relates to the queue.
 rm results.txt
 rm -rf data exp mfcc
+
+feature_method=mfcc
+if [ $# -ne 1 ]; then
+    echo -e "${RED}using default mfcc${NC}"
+else
+    echo -e "${RED}using $1${NC}"
+    feature_method=$1
+fi
 
 tidigits=/home/tjy/tidigits
 
@@ -10,11 +21,32 @@ local/tidigits_data_prep.sh $tidigits || exit 1;
 local/tidigits_prepare_lang.sh  || exit 1;
 utils/validate_lang.pl data/lang || exit 1;
 
-# make MFCC features.
-mfccdir=mfcc
+# feature extraction
+featdir=${feature_method}
 for x in test train; do
-    steps/make_mfcc.sh --cmd "$train_cmd" --nj 20 data/$x exp/make_mfcc/$x $mfccdir || exit 1;
-    steps/compute_cmvn_stats.sh data/$x exp/make_mfcc/$x $mfccdir || exit 1;
+    if [ ${feature_method} = "mfcc" ]; then
+        steps/make_mfcc.sh --cmd "$train_cmd" --nj 20 data/$x exp/make_${feature_method}/$x $featdir || exit 1;
+        steps/compute_cmvn_stats.sh data/$x exp/make_${feature_method}/$x $featdir || exit 1;
+    elif [ ${feature_method} = "mfcc-pitch" ]; then
+        steps/make_mfcc_pitch.sh --cmd "$train_cmd" --nj 20 data/$x exp/make_${feature_method}/$x $featdir || exit 1;
+        steps/compute_cmvn_stats.sh data/$x exp/make_${feature_method}/$x $featdir || exit 1;
+    elif [ ${feature_method} = "fbank-pitch" ]; then
+        steps/make_fbank_pitch.sh --cmd "$train_cmd" --nj 20 data/$x exp/make_${feature_method}/$x $featdir || exit 1;
+        steps/compute_cmvn_stats.sh data/$x exp/make_${feature_method}/$x $featdir || exit 1;
+    elif [ ${feature_method} = "fbank" ]; then
+        steps/make_fbank.sh --cmd "$train_cmd" --nj 20 data/$x exp/make_${feature_method}/$x $featdir || exit 1;
+        steps/compute_cmvn_stats.sh data/$x exp/make_${feature_method}/$x $featdir || exit 1;
+    elif [ ${feature_method} = "plp" ]; then
+        steps/make_plp.sh --cmd "$train_cmd" --nj 20 data/$x exp/make_${feature_method}/$x $featdir || exit 1;
+        steps/compute_cmvn_stats.sh data/$x exp/make_${feature_method}/$x $featdir || exit 1;
+    elif [ ${feature_method} = "plp-pitch" ]; then
+        steps/make_plp_pitch.sh --cmd "$train_cmd" --nj 20 data/$x exp/make_${feature_method}/$x $featdir || exit 1;
+        steps/compute_cmvn_stats.sh data/$x exp/make_${feature_method}/$x $featdir || exit 1;
+# echo "  --pitch-postprocess-config <postprocess-config-file> # config passed to process-kaldi-pitch-feats "
+# echo "  --paste-length-tolerance   <tolerance>               # length tolerance passed to paste-feats"
+    else
+	echo -e "${RED}unknown feature extraction method '${feature_method}'${NC}"
+    fi
 done
 
 # utils/subset_data_dir.sh data/train 1000 data/train_1k
@@ -39,6 +71,4 @@ steps/decode.sh --nj 10 --cmd "$decode_cmd" exp/tri1/graph data/test exp/tri1/de
 # Getting results, check results.txt
 for x in exp/*/decode*; do [ -d $x ] && grep SER $x/wer_* | utils/best_wer.sh >> results.txt; done
 
-GREEN='\033[0;32m'
-NC='\033[0m' # No Color
 echo -e "${GREEN}See results.txt for test result${NC}"

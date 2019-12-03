@@ -1,0 +1,2 @@
+%WER exp/mono0a/decode/wer_17:%SER 2.60 [ 226 / 8700 ]
+%WER exp/tri1/decode/wer_19:%SER 2.32 [ 202 / 8700 ]
