@@ -1,18 +1,16 @@
 #!/bin/bash
 set -e
-# set default python
-export PATH=/user/bin:$PATH
 # configs for 'chain'
 stage=0
 decode_nj=50
-train_set=train_2kshort
+train_set=train_5k
 gmm=tri6b_cleaned
-nnet3_affix=_cleaned
+nnet3_affix=_cleaned1
 
 # The rest are configs specific to this script.  Most of the parameters
 # are just hardcoded at this level, in the commands below.
-affix=1d
-tree_affix=
+affix=1
+tree_affix=1
 train_stage=-10
 get_egs_stage=-10
 decode_iter=
@@ -137,6 +135,7 @@ if [ $stage -le 15 ]; then
 
   # set GPUs to use
   export CUDA_VISIBLE_DEVICES=0,1
+  rm data/train_5k_sp_hires/utt2uniq
   # train tdnn using GPUs
   steps/nnet3/chain/train.py --stage $train_stage \
     --cmd "$decode_cmd" \

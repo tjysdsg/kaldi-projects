@@ -6,7 +6,7 @@ data=/home/tjy/data/librispeech_data/export/a15/vpanayotov/data
 data_url=www.openslr.org/resources/12
 lm_url=www.openslr.org/resources/11
 mfccdir=mfcc
-stage=3
+stage=21
 
 . ./cmd.sh
 . ./path.sh
@@ -39,7 +39,7 @@ fi
 if [ $stage -le 3 ]; then
   echo "Stage $stage Begin! "
   # when the "--stage 3" option is used below we skip the G2P steps, and use the lexicon we have already downloaded from openslr.org/11/
-  local/prepare_dict.sh --stage 3 --nj 30 --cmd "$train_cmd" data/local/lm data/local/lm data/local/dict_nosp
+  local/prepare_dict.sh --stage 3 --nj 80 --cmd "$train_cmd" data/local/lm data/local/lm data/local/dict_nosp
   utils/prepare_lang.sh data/local/dict_nosp "<UNK>" data/local/lang_tmp_nosp data/lang_nosp
   local/format_lms.sh --src-dir data/lang_nosp data/local/lm
   echo "Stage $stage Finish! "
@@ -55,16 +55,16 @@ if [ $stage -le 4 ]; then
   stage=5
 fi
 
-if [ $stage -le 5 ]; then
-  echo "Stage $stage Begin! "
-  # spread the mfccs over various machines, as this data-set is quite large.
-  if [[  $(hostname -f) ==  *.clsp.jhu.edu ]]; then
-    mfcc=$(basename mfccdir) # in case was absolute pathname (unlikely), get basename.
-    utils/create_split_dir.pl /export/b{02,11,12,13}/$USER/kaldi-data/egs/librispeech/s5/$mfcc/storage $mfccdir/storage
-  fi
-  echo "Stage $stage Finish! "
-  stage=6
-fi
+# if [ $stage -le 5 ]; then
+#   echo "Stage $stage Begin! "
+#   # spread the mfccs over various machines, as this data-set is quite large.
+#   if [[  $(hostname -f) ==  *.clsp.jhu.edu ]]; then
+#     mfcc=$(basename mfccdir) # in case was absolute pathname (unlikely), get basename.
+#     utils/create_split_dir.pl /export/b{02,11,12,13}/$USER/kaldi-data/egs/librispeech/s5/$mfcc/storage $mfccdir/storage
+#   fi
+#   echo "Stage $stage Finish! "
+#   stage=6
+# fi
 
 if [ $stage -le 6 ]; then
   echo "Stage $stage Begin! "
@@ -157,7 +157,7 @@ fi
 if [ $stage -le 11 ]; then
   echo "Stage $stage Begin! "
   # Align a 10k utts subset using the tri2b model
-  steps/align_si.sh  --nj 40 --cmd "$train_cmd" --use-graphs true data/train_10k data/lang_nosp exp/tri2b exp/tri2b_ali_10k
+  steps/align_si.sh  --nj 10 --cmd "$train_cmd" --use-graphs true data/train_10k data/lang_nosp exp/tri2b exp/tri2b_ali_10k
 
   # Train tri3b, which is LDA+MLLT+SAT on 10k utts
   steps/train_sat.sh --cmd "$train_cmd" 2500 15000 data/train_10k data/lang_nosp exp/tri2b_ali_10k exp/tri3b
@@ -356,27 +356,6 @@ if [ $stage -le 19 ]; then
   stage=20
 fi
 
-# steps/cleanup/debug_lexicon.sh --remove-stress true  --nj 200 --cmd "$train_cmd" data/train_clean_100 \
-#    data/lang exp/tri6b data/local/dict/lexicon.txt exp/debug_lexicon_100h
-
-# #Perform rescoring of tri6b be means of faster-rnnlm
-# #Attention: with default settings requires 4 GB of memory per rescoring job, so commenting this out by default
-# wait && local/run_rnnlm.sh \
-#     --rnnlm-ver "faster-rnnlm" \
-#     --rnnlm-options "-hidden 150 -direct 1000 -direct-order 5" \
-#     --rnnlm-tag "h150-me5-1000" $data data/local/lm
-
-# #Perform rescoring of tri6b be means of faster-rnnlm using Noise contrastive estimation
-# #Note, that could be extremely slow without CUDA
-# #We use smaller direct layer size so that it could be stored in GPU memory (~2Gb)
-# #Suprisingly, bottleneck here is validation rather then learning
-# #Therefore you can use smaller validation dataset to speed up training
-# wait && local/run_rnnlm.sh \
-#     --rnnlm-ver "faster-rnnlm" \
-#     --rnnlm-options "-hidden 150 -direct 400 -direct-order 3 --nce 20" \
-#     --rnnlm-tag "h150-me3-400-nce20" $data data/local/lm
-
-
 if [ $stage -le 20 ]; then
   echo "Stage $stage Begin! "
   # train and test nnet3 tdnn models on the entire data with data-cleaning.
@@ -388,19 +367,15 @@ fi
 # The nnet3 TDNN recipe:
 # local/nnet3/run_tdnn.sh # set "--stage 11" if you have already run local/chain/run_tdnn.sh
 
-# # train models on cleaned-up data
-# # we've found that this isn't helpful-- see the comments in local/run_data_cleaning.sh
-# local/run_data_cleaning.sh
-
-# # The following is the current online-nnet2 recipe, with "multi-splice".
-# local/online/run_nnet2_ms.sh
-
-# # The following is the discriminative-training continuation of the above.
-# local/online/run_nnet2_ms_disc.sh
-
-# ## The following is an older version of the online-nnet2 recipe, without "multi-splice".  It's faster
-# ## to train but slightly worse.
-# # local/online/run_nnet2.sh
-
 # Wait for decodings in the background
 wait
+
+if [ $stage -le 21 ]; then
+  # write results to file
+  if [ -f tdnn_results.txt ]; then
+    rm tdnn_results.txt
+  fi
+  for x in exp/chain_cleaned1/tdnn_1_sp/decode_*; do
+    grep WER $x/wer_* | utils/best_wer.sh >> tdnn_results.txt
+  done
+fi

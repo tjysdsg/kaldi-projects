@@ -1,0 +1,16 @@
+%WER 5.92 [ 3223 / 54402, 432 ins, 339 del, 2452 sub ] exp/chain_cleaned1/tdnn_1_sp/decode_dev_clean_fglarge/wer_11_0.5
+%WER 6.16 [ 3350 / 54402, 393 ins, 411 del, 2546 sub ] exp/chain_cleaned1/tdnn_1_sp/decode_dev_clean_tglarge/wer_12_0.5
+%WER 7.78 [ 4232 / 54402, 434 ins, 575 del, 3223 sub ] exp/chain_cleaned1/tdnn_1_sp/decode_dev_clean_tgmed/wer_13_0.0
+%WER 8.85 [ 4817 / 54402, 507 ins, 593 del, 3717 sub ] exp/chain_cleaned1/tdnn_1_sp/decode_dev_clean_tgsmall/wer_11_0.0
+%WER 21.90 [ 11158 / 50948, 1214 ins, 1547 del, 8397 sub ] exp/chain_cleaned1/tdnn_1_sp/decode_dev_other_fglarge/wer_15_0.0
+%WER 22.82 [ 11627 / 50948, 1230 ins, 1707 del, 8690 sub ] exp/chain_cleaned1/tdnn_1_sp/decode_dev_other_tglarge/wer_16_0.0
+%WER 25.85 [ 13168 / 50948, 1092 ins, 2331 del, 9745 sub ] exp/chain_cleaned1/tdnn_1_sp/decode_dev_other_tgmed/wer_16_0.0
+%WER 27.99 [ 14262 / 50948, 1126 ins, 2624 del, 10512 sub ] exp/chain_cleaned1/tdnn_1_sp/decode_dev_other_tgsmall/wer_15_0.0
+%WER 6.77 [ 3557 / 52576, 444 ins, 404 del, 2709 sub ] exp/chain_cleaned1/tdnn_1_sp/decode_test_clean_fglarge/wer_12_0.5
+%WER 7.02 [ 3693 / 52576, 511 ins, 417 del, 2765 sub ] exp/chain_cleaned1/tdnn_1_sp/decode_test_clean_tglarge/wer_13_0.0
+%WER 8.75 [ 4602 / 52576, 547 ins, 545 del, 3510 sub ] exp/chain_cleaned1/tdnn_1_sp/decode_test_clean_tgmed/wer_12_0.0
+%WER 9.72 [ 5108 / 52576, 521 ins, 717 del, 3870 sub ] exp/chain_cleaned1/tdnn_1_sp/decode_test_clean_tgsmall/wer_13_0.0
+%WER 23.94 [ 12529 / 52343, 1234 ins, 1997 del, 9298 sub ] exp/chain_cleaned1/tdnn_1_sp/decode_test_other_fglarge/wer_16_0.0
+%WER 24.73 [ 12942 / 52343, 1314 ins, 1988 del, 9640 sub ] exp/chain_cleaned1/tdnn_1_sp/decode_test_other_tglarge/wer_15_0.0
+%WER 28.20 [ 14759 / 52343, 1210 ins, 2699 del, 10850 sub ] exp/chain_cleaned1/tdnn_1_sp/decode_test_other_tgmed/wer_15_0.0
+%WER 30.21 [ 15815 / 52343, 1230 ins, 2849 del, 11736 sub ] exp/chain_cleaned1/tdnn_1_sp/decode_test_other_tgsmall/wer_14_0.0

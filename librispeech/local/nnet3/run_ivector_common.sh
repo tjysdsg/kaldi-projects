@@ -48,8 +48,7 @@ if [ $stage -le 2 ]; then
     exit 1
   fi
   echo "$0: aligning with the perturbed low-resolution data"
-  steps/align_fmllr.sh --nj 100 --cmd "$train_cmd" \
-    data/${train_set}_sp data/lang $gmm_dir $ali_dir || exit 1
+  steps/align_fmllr.sh --nj 100 --cmd "$train_cmd" data/${train_set}_sp data/lang $gmm_dir $ali_dir || exit 1
 fi
 
 if [ $stage -le 3 ]; then
@@ -80,7 +79,7 @@ if [ $stage -le 3 ]; then
   done
 
   # now create a data subset. 60k is 1/5th of the training dataset (around 200 hours).
-  utils/subset_data_dir.sh data/${train_set}_sp_hires 200 data/${train_set}_sp_hires_60k
+  utils/subset_data_dir.sh data/${train_set}_sp_hires 500 data/${train_set}_sp_hires_60k
 fi
 
 if [ $stage -le 4 ]; then
@@ -103,11 +102,7 @@ if [ $stage -le 4 ]; then
 
   echo "$0: training the diagonal UBM."
   # Use 512 Gaussians in the UBM.
-  steps/online/nnet2/train_diag_ubm.sh --cmd "$train_cmd" --nj 30 \
-    --num-frames 700000 \
-    --num-threads $num_threads_ubm \
-    ${temp_data_root}/${train_set}_sp_hires_subset 512 \
-    exp/nnet3${nnet3_affix}/pca_transform exp/nnet3${nnet3_affix}/diag_ubm
+  steps/online/nnet2/train_diag_ubm.sh --cmd "$train_cmd" --nj 30 --num-frames 700000 --num-threads $num_threads_ubm ${temp_data_root}/${train_set}_sp_hires_subset 512 exp/nnet3${nnet3_affix}/pca_transform exp/nnet3${nnet3_affix}/diag_ubm
 fi
 
 
@@ -116,8 +111,8 @@ if [ $stage -le 5 ]; then
   # this one has a fairly small dim (defaults to 100) so we don't use all of it,
   # we use just the 60k subset (about one fifth of the data, or 200 hours).
   echo "$0: training the iVector extractor"
-  steps/online/nnet2/train_ivector_extractor.sh --cmd "$train_cmd" --nj 10 --num-processes $num_processes \
-    data/${train_set}_sp_hires_60k exp/nnet3${nnet3_affix}/diag_ubm exp/nnet3${nnet3_affix}/extractor || exit 1;
+  steps/online/nnet2/train_ivector_extractor.sh --cmd "$train_cmd" --nj 10 --num-processes $num_processes data/${train_set}_sp_hires_60k exp/nnet3${nnet3_affix}/diag_ubm exp/nnet3${nnet3_affix}/extractor \
+  || exit 1;
 fi
 
 if [ $stage -le 6 ]; then
@@ -134,12 +129,9 @@ if [ $stage -le 6 ]; then
 
   # having a larger number of speakers is helpful for generalization, and to
   # handle per-utterance decoding well (iVector starts at zero).
-  utils/data/modify_speaker_info.sh --utts-per-spk-max 2 \
-    data/${train_set}_sp_hires ${ivectordir}/${train_set}_sp_hires_max2
+  utils/data/modify_speaker_info.sh --utts-per-spk-max 2 data/${train_set}_sp_hires ${ivectordir}/${train_set}_sp_hires_max2
 
-  steps/online/nnet2/extract_ivectors_online.sh --cmd "$train_cmd" --nj 60 \
-    ${ivectordir}/${train_set}_sp_hires_max2 exp/nnet3${nnet3_affix}/extractor \
-    $ivectordir || exit 1;
+  steps/online/nnet2/extract_ivectors_online.sh --cmd "$train_cmd" --nj 60 ${ivectordir}/${train_set}_sp_hires_max2 exp/nnet3${nnet3_affix}/extractor $ivectordir || exit 1;
 fi
 
 if [ $stage -le 7 ]; then
